@@ -221,6 +221,17 @@ pattern-match against it.
 | `getValidationMessages` | TrueChange validation messages against the current pointer's OML; optional `filter` of `info` / `warning` / `error` |
 | `listApps` | The open module + its loaded references, each with `moduleType` (see § 4.1) |
 
+
+> **First read after a fresh snapshot can race.** Several read calls issued in
+> parallel right after `omlReset` (or at session start) may fail with
+> `OML not found: …-in.oml` / `Could not find file …-in.oml`. A lone call
+> works, and so does a retry. Issue the first read on its own, then parallelise.
+>
+> **`getDataModel` is verbose.** It returns a `(OutSystems.Model.IReference …) => { … }`
+> lambda where ~70% is `AddDependency(ParseGlobalKey(…))` lines for System /
+> OutSystemsUI / Charts / Maps entities, with the module's own entities in the
+> middle. For orientation prefer `runQuery "Root { Entities { Name } }"`.
+
 Read tools auto-snapshot the live module on the first call and subsequently
 follow the session pointer, so they always see the state of the last successful
 mutation (see [`reference/mcp-session-pointer.md`](reference/mcp-session-pointer.md)).
@@ -303,13 +314,14 @@ Each `validationMessages` entry is an object, not a line of text:
 > `exceptionMessage` (or, if the sidecar returns a JSON-RPC error envelope, as
 > an MCP tool error such as `OML_TOOL_VERB_FAILURE` / `OML_TOOL_PROTOCOL_ERROR`).
 > **There is no `compilationErrors` field.** Code that does not compile never
-> ran, so it comes back as an **MCP tool error** (`OML_TOOL_CODE_REJECTED`)
-> rather than as a result — the compiler diagnostics are in that error's
-> message, one per line, each prefixed `compilationErrors:` (or
+> ran, so it comes back as an **MCP tool error** rather than as a result (the
+> `OML_TOOL_CODE_REJECTED` code is not shown on the current build — the error is
+> `An error occurred invoking 'applyModelApiCode': [-32602] Script compilation failed`).
+> The compiler diagnostics are in that message, one per line, each prefixed `compilationErrors:` (or
 > `restrictionErrors:` in the restricted sandbox):
 >
 > ```
-> [-32602] Script compilation failed
+> An error occurred invoking 'applyModelApiCode': [-32602] Script compilation failed
 > compilationErrors: (2,20): error CS1061: 'IESpace' does not contain a definition for 'NoSuchModelApiMember'
 > ```
 >

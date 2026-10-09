@@ -197,8 +197,9 @@ surface through `exceptionMessage` — or, if the sidecar returns a JSON-RPC
 error envelope, as an MCP tool error (`OML_TOOL_VERB_FAILURE` /
 `OML_TOOL_PROTOCOL_ERROR`). **A compile failure has no result at all** — code
 that doesn't compile never runs, so it returns an MCP tool error
-(`OML_TOOL_CODE_REJECTED`) whose message carries the diagnostics, one per line
-prefixed `compilationErrors:`. Don't look for them in the result.
+(`OML_TOOL_CODE_REJECTED` on some builds; the current build shows only
+`[-32602] Script compilation failed`) whose message carries the diagnostics, one
+per line prefixed `compilationErrors:`. Don't look for them in the result.
 The session pointer only advances when the out file was written and
 `exceptionMessage` is empty — which is
 exactly when `mutatedOmlPath` is populated. **`mutatedOmlPath` alone doesn't
