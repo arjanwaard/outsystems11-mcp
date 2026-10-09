@@ -147,7 +147,7 @@ you no longer scan text for it — filter `validationMessages` on
 surface through `exceptionMessage` (or as an MCP tool error such as
 `OML_TOOL_VERB_FAILURE` if the sidecar returned a JSON-RPC error envelope).
 **There is no `compilationErrors` field** — code that doesn't compile never
-runs, so it returns an MCP tool error (`OML_TOOL_CODE_REJECTED`) carrying the
+runs, so it returns an MCP tool error (`OML_TOOL_CODE_REJECTED` on some builds; `[-32602] Script compilation failed` on the current one) carrying the
 diagnostics instead of a result. The session pointer advances only when the out
 file was written and `exceptionMessage` is empty.
 
