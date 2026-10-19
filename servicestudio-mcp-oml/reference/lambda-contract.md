@@ -223,6 +223,7 @@ Failed attempts keep reads pointed at the last good state.
 | Tool error mentions `CS1061: 'IESpace' does not contain 'Foo'` | Wrong Model API method / property name | Call `getDataModel` to learn the actual surface; correct the snippet |
 | Tool error mentions `CS0201` / other syntax error, or the body must end in `}` | `code` wasn't a clean `eSpace => { ... }` ending in `}` | Re-check the wrapper, the trailing `}`, and statement validity |
 | `exceptionMessage` populated at runtime (e.g. `Named("Foo")` on a missing entity, a wrong cast) | The lambda compiled but threw | Add a null guard or fix the cast. For a System / referenced entity, `eSpace.Entities` is local-only — resolve via `eSpace.References.Named("(System)")` and cast to the `*Signature` interface (see [`patterns-by-element.md`](patterns-by-element.md) § "FK to a System / referenced entity") |
+| `Unable to find object with Name equal to X in collection` for an entity that lives in a reference module (e.g. a shared module) | `eSpace.Entities` only lists local entities | Resolve through the reference: `eSpace.References.Named("SharedModule").Entities.OfType<OutSystems.Model.Data.IServerEntitySignature>().Named("Item")`, and `IStaticEntitySignature` for a static entity. Confirmed on a live module (2026-10). |
 | Clean response, but a follow-up `get*` doesn't reflect the mutation | The silent no-op — the lambda compiled and ran but never touched `eSpace` | Rewrite so the body actually mutates `eSpace` |
 | Tool error `'code' must only reference the OutSystems Model API … (found 'X')` or `Import 'X' is not allowed` | The sandbox rejected the snippet before compiling | Remove `X`: use the typed Model API, the throw-probe instead of `Console`, and fully qualified `ServiceStudio.Plugin.*` types instead of importing them (§ "Sandbox") |
 | `validationMessages` has a `type: "Error"` entry | Saved-but-invalid — the model compiled and saved but has a TrueChange error | Fix the offending element (often a hard-coded aggregate name that was auto-renamed); see [`patterns-by-element.md`](patterns-by-element.md) |
@@ -298,8 +299,9 @@ eSpace => {
 The response has `exceptionMessage: "PROBE:screens=…"` (verbatim), `mutatedOmlPath: ""`,
 the pointer does not move, and **`validationMessages` still lists TrueChange
 messages for the in-memory model** — so you can build an edit, throw at the
-end, and read what TrueChange *would* say before committing it. Full
-template: [`../examples/ProbeModelWithException.cs`](../examples/ProbeModelWithException.cs).
+end, and read what TrueChange *would* say before committing it. Full template: [`../examples/ProbeModelWithException.cs`](../examples/ProbeModelWithException.cs).
+
+Probes are also the fastest way to find elements. Searching a reference module's flows for a block needs `IMobileBlockSignature`, not `IMobileBlock`: the local type matches nothing in `OutSystemsUI`, so a probe returns an empty list. Cast before reading `Name` (`IMobileFlowNodeSignature` has no `Name`). For example, `foreach (var n in flow.Nodes.OfType<OutSystems.Model.UI.Mobile.IMobileBlockSignature>())` finds `Navigation/Submenu`.
 
 ### Typed replacements for old reflection recipes (all verified live 2026-09-30)
 
