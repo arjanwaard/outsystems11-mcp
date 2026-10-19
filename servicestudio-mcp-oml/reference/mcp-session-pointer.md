@@ -181,6 +181,8 @@ task is: take the `mutatedOmlPath` from the **last** successful apply and call
 call), the task was read-only, or the user asked you to discard the chain
 (`omlReset`).
 
+Chained `applyModelApiCode` calls stack on one pointer: the latest `mutatedOmlPath` already contains every earlier apply in the chain, so pass that one path to `omlMerge`, not each intermediate path.
+
 ### `omlMerge` clears that module's pointer
 
 Once the merge resolves, `omlMerge` drops the pointer for the module you named,
