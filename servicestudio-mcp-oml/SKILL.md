@@ -248,6 +248,14 @@ Full catalogue with input shapes: [`reference/verb-reference.md`](reference/verb
 > `runQuery`, and `getValidationMessages` take no `includeJson`. By-name reads
 > (`getServerAction`, `getScreen`, …) name the element with `objectName`.
 
+> **Probing tips (verified 2026-10-20).**
+> - Every `applyModelApiCode` and probe result repeats **all of the module's existing validation warnings**
+>   (often dozens, from unrelated code). Scan only for `type: "Error"` and for messages whose `ownerPath` is
+>   in the element you touched.
+> - `widget.OnClick.Destination` is typed `IObjectSignature` and has no `.Name` (CS1061). In a probe print
+>   `Destination.GetType().Name`, or `null` when unset.
+> - Reading `.Style` / `.Enabled` of a widget in a probe can throw a `NullReferenceException`; read only what you need.
+
 > **Read-back code is not replayable verbatim.** `getDataModel` and friends emit
 > referenced elements as `eSpace.AddDependency(Services.ModelServices.ParseGlobalKey(…))`
 > lines, but `AddDependency` throws inside `applyModelApiCode` even for an
@@ -523,6 +531,11 @@ Their schemas don't declare `sessionToken`; send it anyway (§ 0):
   and waits for the result. It needs a write permission the user grants in the MCP Server
   dialog; while that is withheld it returns status `blocked`. **Only call it when the user
   explicitly asks to publish** — never as an automatic closing step.
+  **Refusal (verified 2026-10-20):** a session's permission layer can refuse the call outright
+  (e.g. "Permission … denied … [Production Deploy]"), which is different from the `blocked` status
+  above. Do not retry or look for a workaround such as publishing through another tool. Finish what does
+  not need the publish (merge, notes), report that the merged module is **unpublished and untested**,
+  and let the user publish from Service Studio or allow the tool.
   Note (2026-10-14): the tool's advertised input schema lists only `input`, but the server still
   rejects the call without a top-level `sessionToken` (`-32002 … requires a valid session token`);
   pass it anyway.
